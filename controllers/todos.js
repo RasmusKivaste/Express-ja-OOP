@@ -1,14 +1,20 @@
 import { Todo } from '../models/todo.js';
+import { fileManager } from '../utils/file.js';
 
 class TodoController {
     constructor() {
-        this.TODOS = [];
+        this.initTodos();
     }
 
-    createTodo = (req, res) => {
+    async initTodos() {
+        this.TODOS = await fileManager.readFile();
+    }
+
+    createTodo = async (req, res) => {
         const task = req.body.task;
         const newTodo = new Todo(task);
         this.TODOS.push(newTodo);
+        await fileManager.writeFile(this.TODOS);
         res.status(201).json({
             message: 'Created the todo.',
             createdTodo: newTodo
@@ -19,7 +25,7 @@ class TodoController {
         res.json({ todos: this.TODOS });
     }
 
-    updateTodo = (req, res) => {
+    updateTodo = async (req, res) => {
         const todoId = req.params.id;
         const updatedTask = req.body.task;
         const todoIndex = this.TODOS.findIndex(todo => todo.id === todoId);
@@ -30,11 +36,12 @@ class TodoController {
 
         this.TODOS[todoIndex] = new Todo(updatedTask);
         this.TODOS[todoIndex].id = todoId;
+        await fileManager.writeFile(this.TODOS);
         
         res.json({ message: 'Updated!', updatedTodo: this.TODOS[todoIndex] });
     }
 
-    deleteTodo = (req, res) => {
+    deleteTodo = async (req, res) => {
         const todoId = req.params.id;
         const todoIndex = this.TODOS.findIndex(todo => todo.id === todoId);
 
@@ -43,6 +50,8 @@ class TodoController {
         }
 
         this.TODOS.splice(todoIndex, 1);
+        await fileManager.writeFile(this.TODOS);
+
         res.json({ message: 'Todo deleted!' });
     }
 }
